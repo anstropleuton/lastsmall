@@ -2,8 +2,14 @@
 #include "aplib.hpp"
 
 // C includes
+#ifndef _WIN32
 #include <termios.h>
 #include <unistd.h>
+#else
+typedef unsigned int tcflag_t;
+struct termios {};
+#define ECHO 1
+#endif
 
 // C++ includes
 #include <chrono>
@@ -36,6 +42,7 @@ bool original_tty_state_set = false;
 // Insert a flag to TTY
 void insert_tty_flag(tcflag_t flag)
 {
+#ifndef _WIN32
     if (!original_tty_state_set)
     {
         tcgetattr(STDIN_FILENO, &original_tty_state);
@@ -45,11 +52,13 @@ void insert_tty_flag(tcflag_t flag)
     current_tty_state = original_tty_state;
     current_tty_state.c_lflag |= flag;
     tcsetattr(STDIN_FILENO, TCSANOW, &current_tty_state);
+#endif
 }
 
 // Remove a flag from TTY
 void remove_tty_flag(tcflag_t flag)
 {
+#ifndef _WIN32
     if (!original_tty_state_set)
     {
         tcgetattr(STDIN_FILENO, &original_tty_state);
@@ -59,16 +68,19 @@ void remove_tty_flag(tcflag_t flag)
     current_tty_state = original_tty_state;
     current_tty_state.c_lflag &= ~flag;
     tcsetattr(STDIN_FILENO, TCSANOW, &current_tty_state);
+#endif
 }
 
 // Restore the default TTY flags
 void restore_tty_flag()
 {
+#ifndef _WIN32
     if (original_tty_state_set)
     {
         current_tty_state = original_tty_state;
         tcsetattr(STDIN_FILENO, TCSANOW, &current_tty_state);
     }
+#endif
 }
 
 // "Templates cannot be declared inside of a local class -- clang"
